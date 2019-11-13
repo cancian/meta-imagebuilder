@@ -17,20 +17,3 @@ config timeserver 'ntp'
 	list server '2.openwrt.pool.ntp.org'
 	list server '3.openwrt.pool.ntp.org'
 	option enable_server '1'
-
-config led
-	option default '0'
-	option trigger 'netdev'
-	option dev 'br-mesh'
-	option sysfs 'ubnt:white:dome'
-	option mode 'rx'
-	option name 'rad5ghz11s-rx'
-
-config led
-	option default '0'
-	option name 'rad5ghz11s-tx'
-	option sysfs 'ubnt:blue:dome'
-	option trigger 'netdev'
-	option dev 'br-mesh'
-	option mode 'tx'
-
