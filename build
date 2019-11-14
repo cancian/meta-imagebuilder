@@ -10,7 +10,11 @@ PWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # $2 - Build profile name
 # $3 - Device folder / nickname
 do_build() {
-  PROFILE_PATH="$PWD/communities/$1/$2"
+  COMMUNITY_PATH="$PWD/communities/$1"
+  if [ -f "$COMMUNITY_PATH/settings.sh" ]; then
+    . "$COMMUNITY_PATH/settings.sh"
+  fi
+  PROFILE_PATH="$COMMUNITY_PATH/$2"
   if [ -f "$PROFILE_PATH/settings.sh" ]; then
     . "$PROFILE_PATH/settings.sh"
   fi
