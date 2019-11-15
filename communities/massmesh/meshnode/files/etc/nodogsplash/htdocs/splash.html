@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <link rel="shortcut icon" href="captiveportal-favicon.ico" />
+  <title>MassMesh Hotspot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <style type="text/css">
+    body {
+      background: url(img/captiveportal-back.png);
+      background-color: #2f2f2f;
+      background: url(img/captiveportal-pinlayer2.png), url(img/captiveportal-pinlayer1.png), url(img/captiveportal-back.png);
+    }
+
+    .vertical-offset {
+      padding-top: 60px;
+    }
+
+    .logo {
+      width: 160px;
+      height: 160px;
+      background-color: black;
+      padding: 4px;
+      border: 8px solid white;
+      margin: 0 auto -60px;
+      display: block;
+    }
+  </style>
+  <script defer src="js/jquery-3.4.1.slim.min.js"></script>
+  <script defer src="js/TweenLite.min.js"></script>
+  <script defer src="js/CSSPlugin.min.js"></script>
+  <script type="text/javascript">
+    window.addEventListener('DOMContentLoaded', function() {
+      $(document).mousemove(function(e) {
+        TweenLite.to($('body'), .5, {
+          backgroundPosition: "" + parseInt(event.pageX / 8) + "px " + parseInt(event.pageY / '12') + "px, " + parseInt(event.pageX / '15') + "px " + parseInt(event.pageY / '15') + "px, " + parseInt(event.pageX / '30') + "px " + parseInt(
+            event.pageY / '30') + "px"
+        });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row justify-content-center vertical-offset">
+      <div class="col-md-6">
+        <img class="logo rounded-circle shadow-lg" src="img/mass-mesh-logo-270.png">
+        <div class="card shadow-lg" style="margin-bottom: 30px; z-index: -1;">
+          <div class="card-header">
+            MassMesh
+            <span class="float-right">Hotspot</span>
+          </div>
+          <div class="card-body">
+            <form method="get" action="$authaction" accept-charset="UTF-8" role="form">
+              <fieldset>
+                <p>MassMesh is a community-owned and volunteer-run public wifi network. Enjoy your access to the network courtesy of a volunteer near you! Learn more about our project including how you can extend the mesh at MassMesh.org.</p>
+                <p>By connecting to this network, you agree to the following terms:</p>
+                <ul>
+                  <li>Use of the network is provided on an as-is basis</li>
+                  <li>Do not use the network in connection with any illegal activity</li>
+                  <li>Network resources are to be used reasonably - please refrain from disrupting the operation of this and other networks</li>
+                  <li>Do not engage in activities that may harm other users of the network such as sniffing / intercepting traffic, introducing malware, or spoofing network protocols</li>
+                </ul>
+                <input type="hidden" name="tok" value="$tok">
+                <input type="hidden" name="redir" value="$redir">
+                <input class="btn btn-lg btn-success btn-block" name="accept" type="submit" value="Connect">
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
