@@ -47,7 +47,7 @@ jobs:
     steps:
       - run:
           name: Install Dependencies
-          command: 'apt-get update && apt-get install -y ca-certificates'
+          command: 'apt-get update && apt-get install -y git ca-certificates'
       - add_ssh_keys:
           fingerprints:
             - "9c:ec:6c:01:d7:c6:10:2d:a5:41:ab:c3:ef:44:13:46"
