@@ -1,43 +1,65 @@
-version: 2
+version: 2.1
+
 jobs:
+
+  checkout_code:
+    docker:
+      - image: debian:buster
+    steps:
+      - run:
+          name: Install Dependencies
+          command: 'apt-get update && apt-get install -y ca-certificates'
+      - checkout
+      - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - ./
   build:
     docker:
       - image: debian:buster
-
+    parameters:
+      community:
+        type: string
+      profile:
+        type: string
+      device:
+        type: string
     steps:
-      - checkout
+      - run:
+          name: Install Dependencies
+          command: 'apt-get update && apt-get install -y gnupg aria2 xz-utils make perl gcc g++ libncurses5-dev gawk unzip bzip2 wget python3 git file ca-certificates'
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - run:
+          name: Patch Bin Directory
+          command: sed -i '/BIN_DIR=/ s/$PROFILE_PATH\/bin\/$3/\/tmp\/artifacts\/$1\/$2\/$3/' ./build
+      - run:
+          name: Build << parameters.community >> << parameters.profile >> << parameters.device >>
+          command: './build << parameters.community >> << parameters.profile >> << parameters.device >>'
+      - persist_to_workspace:
+          root: /tmp/artifacts
+          paths: ./*
+
+  deploy:
+    docker:
+      - image: debian:buster
+    working_directory: /tmp/artifacts
+    steps:
+      - run:
+          name: Install Dependencies
+          command: 'apt-get update && apt-get install -y git ca-certificates'
       - add_ssh_keys:
           fingerprints:
             - "9c:ec:6c:01:d7:c6:10:2d:a5:41:ab:c3:ef:44:13:46"
-      - run:
-          name: Install Dependencies
-          command: 'apt-get update && apt-get install -y gnupg aria2 xz-utils make perl gcc g++ libncurses5-dev gawk unzip bzip2 wget python3 git file'
-      - run:
-          name: Patch Bin Directory
-          command: sed -i '/BIN_DIR=/ s/$PROFILE_PATH\/bin\/$3/$PWD\/bin\/$1\/$2\/$3/' ./build
-      - run:
-          name: Build Mesh Node Espressobin
-          command: './build massmesh meshnode globalscale_espressobin'
-      - run:
-          name: Build Mesh Node Raspberry Pi 4
-          command: './build massmesh meshnode rpi-4'
-      - run:
-          name: Build Mesh Node PC Engines APU2/APU3
-          command: './build massmesh meshnode apu2'
-      - run:
-         name: Build Mesh Radio NS 5AC Loco
-         command: './build massmesh meshradio ubnt_nanostation-ac-loco'
-      - run:
-         name: Build Mesh Radio UAP AC Mesh
-         command: './build massmesh meshradio ubnt_unifiac-mesh'
+      - attach_workspace:
+          at: /tmp/artifacts
       - store_artifacts:
-          path: './bin'
+          path: '/tmp/artifacts'
           destination: '/'
       - deploy:
           name: "Publish Artifacts"
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              cd bin
               git init
               git config user.email "circle@circleci.com"
               git config user.name "CircleCI"
@@ -46,3 +68,51 @@ jobs:
               git commit -m "Commit artifacts."
               GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin master --force
             fi
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - checkout_code
+      - build:
+          name: build_1
+          community: massmesh
+          profile: meshnode
+          device: rpi-4
+          requires:
+            - checkout_code
+      - build:
+          name: build_2
+          community: massmesh
+          profile: meshnode
+          device: apu2
+          requires:
+            - checkout_code
+      - build:
+          name: build_3
+          community: massmesh
+          profile: meshnode
+          device: globalscale_espressobin
+          requires:
+            - checkout_code
+      - build:
+          name: build_4
+          community: massmesh
+          profile: meshradio
+          device: ubnt_nanostation-ac-loco
+          requires:
+            - checkout_code
+      - build:
+          name: build_5
+          community: massmesh
+          profile: meshradio
+          device: ubnt_unifiac-mesh
+          requires:
+            - checkout_code
+      - deploy:
+          requires:
+            - build_1
+            - build_2
+            - build_3
+            - build_4
+            - build_5
