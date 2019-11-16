@@ -6,7 +6,7 @@ ROOT_DIR="$PWD"			# where the script is
 DISTRO="${DISTRO:-openwrt}"	# the folder where to store created files
 VERSION="${VERSION:-18.06.2}"   # default version
 IB_VERSION="${IB_VERSION:-$VERSION}" # ImageBuilder version if different to distro version
-BASE_URL="${BASE_URL:-https://downloads.openwrt.org}" 	# download imagebuilders
+BASE_URL="${BASE_URL:-https://cdn.openwrt.org}" 	# download imagebuilders
 BASE_PATH="$DISTRO/$VERSION/$TARGET" 	        # structure for storing stuff
 
 # If /dev/shm is mounted noexec, then <Use/Avoid> building in RAM
