@@ -4,6 +4,20 @@
 uci show firewall | grep -o "firewall\.\@forwarding\[[0-9]\+\]" | uniq | xargs uci delete
 uci commit
 
+# Re-add forwardings between ygg and lan
+uci add firewall forwarding
+uci set firewall.@forwarding[-1].dest='yggdrasil'
+uci set firewall.@forwarding[-1].src='lan'
+uci commit
+uci add firewall forwarding
+uci set firewall.@forwarding[-1].dest='lan'
+uci set firewall.@forwarding[-1].src='yggdrasil'
+uci commit
+
+# Enable masquerading on ygg interface
+uci set firewall.yggdrasil.masq='1'
+uci commit
+
 # Add yggdrasil peers
 tmp=$(mktemp)
 jq '.Peers = ["tcp://50.236.201.218:56088"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
