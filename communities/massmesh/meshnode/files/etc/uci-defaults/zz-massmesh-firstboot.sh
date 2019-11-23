@@ -19,13 +19,24 @@ uci set firewall.yggdrasil.masq='1'
 uci commit
 
 # Add yggdrasil peers
-tmp=$(mktemp)
-jq '.Peers = ["tcp://50.236.201.218:56088"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
-jq '.Peers += ["tcp://45.76.166.128:12345"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
-jq '.Peers += ["tcp://45.77.107.150:34660"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
-jq '.Peers += ["tcp://108.175.10.127:61216"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
-jq '.Peers += ["tcp://198.58.100.240:44478"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
+uci add yggdrasil peer
+uci set yggdrasil.@peer[-1].uri='tcp://50.236.201.218:56088'
+uci add yggdrasil peer
+uci set yggdrasil.@peer[-1].uri='tcp://45.76.166.128:12345'
+uci add yggdrasil peer
+uci set yggdrasil.@peer[-1].uri='tcp://45.77.107.150:34660'
+uci add yggdrasil peer
+uci set yggdrasil.@peer[-1].uri='tcp://108.175.10.127:61216'
+uci add yggdrasil peer
+uci set yggdrasil.@peer[-1].uri='tcp://198.58.100.240:44478'
+uci commit
 
 # Add yggdrasil tunnel routing config
-jq '.TunnelRouting.Enable = true' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
-jq '.TunnelRouting.IPv4LocalSubnets = ["0.0.0.0/0"]' /etc/yggdrasil.conf > "$tmp" && mv "$tmp" /etc/yggdrasil.conf
+uci set yggdrasil.yggdrasil.TunnelRouting_Enable=1
+uci add yggdrasil ipv4_local_subnet
+uci set yggdrasil.@ipv4_local_subnet[-1].subnet='0.0.0.0/0'
+uci commit
+
+# Set ula
+# uci set network.globals.ula_prefix='300:xxxx:xxxx:xxxx::/64'
+# uci commit
