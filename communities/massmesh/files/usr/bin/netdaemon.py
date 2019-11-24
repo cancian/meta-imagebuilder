@@ -21,8 +21,6 @@ LEASE_CLIENT_EXPIRE     = os.environ.get('LEASE_CLIENT_EXPIRE', 240)
 
 import netdaemon_glue
 import json
-import re
-
 
 APP_BASEDIR     = os.getcwd()
 THIS_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -45,9 +43,6 @@ def main():
     log('NetDaemon: Config: Warning: ' + str(e))
 
   pass
-
-
-## main
 
 wsgi_server = netdaemon_glue.wsgi()
 wsgi_server.setUp()
