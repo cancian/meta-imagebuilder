@@ -348,6 +348,7 @@ def wip_make_register(start_response, remote_addr, box_pub_key):
   try:
     assert(verify_publickey(remote_addr=remote_addr, box_pub_key=box_pub_key))
   except:
+    start_response("400 OK", [("content-type", "application/json; charset=utf-8")])
     return [ json.dumps({"public_encryption_key": "error"}).encode("utf-8") ]
 
   ## All networks in csv file
@@ -365,13 +366,16 @@ def wip_make_register(start_response, remote_addr, box_pub_key):
 
       ip_list   = list(free_network)
       broadcast = ip_list.pop(-1)
-      gateway   = ip_list.pop(0)
+      gateway   = ip_list.pop(1)
+      citizen   = ip_list.pop(1)
       poolsize  = len(ip_list)
+
       reqcloud  = 'cloud-' + ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
 
       network_cidr  = str(free_network)
       network_long  = str(netaddr.IPNetwork(gateway).value)
+      prefix_length = netaddr.IPNetwork(network_cidr).prefixlen
       public_enckey = box_pub_key
       status_blob   = 'None'
       ident_blob    = {'cloud': reqcloud, 'remote_addr': remote_addr}
@@ -389,9 +393,14 @@ def wip_make_register(start_response, remote_addr, box_pub_key):
 
 
   return [ json.dumps({
-    'remote_addr': remote_addr,
-    'public_key': box_pub_key,
-    'cloud_network': str(free_network),
+    'gateway_addr': remote_addr,
+    'box_pub_key': box_pub_key,
+    'prefix': str(free_network),
+    'pfxlen': str(prefix_length),
+    'gateway': str(gateway),
+    'broadcast': str(network_cidr),
+    'poolsize': str(poolsize),
+    'citizen': str(citizen)
   }).encode("utf-8") ]
 
 # <!-- end wip_make_pool_db() -->
