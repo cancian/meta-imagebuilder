@@ -10,6 +10,8 @@ from subprocess import check_output
 import multiprocessing
 import socket
 
+from mm_cli import util
+
 import csv
 import netaddr
 import random
@@ -52,81 +54,6 @@ ND_SCRIPT_MESHCTL  = '/usr/bin/meshctl'
 
 BIN_YGGDRASIL = '/usr/sbin/yggdrasil'
 BIN_YGGDR_CTL = '/usr/sbin/yggdrasilctl'
-
-
-class Hemicarp:
-  """
-  Admin API accessible with tcp or unix socket
-    - admin_endpoint=("127.0.0.2", 3959)
-    - admin_endpoint="/pirates/microprovision/remote-ygg.sock"
-  """
-
-  def __init__(self, name, admin_endpoint):
-    self.name = name
-    self.admin_endpoint = admin_endpoint
-    self.list = self.yggCaller(json.dumps({"request":"list"}))
-    self.nodeinfo = self.yggCaller(json.dumps({"request":"getself"}))['response']['self']
-    self.ipv6 = list(self.nodeinfo.keys())[0]
-    self.build_version = self.nodeinfo[self.ipv6]['build_version']
-    self.box_pub_key = self.nodeinfo[self.ipv6]['box_pub_key']
-    self.coords = self.nodeinfo[self.ipv6]['coords']
-    self.subnet = self.nodeinfo[self.ipv6]['subnet']
-  # /init
-
-  def allowSource(self, subnet):
-    return self.yggCaller(json.dumps({"request":"addlocalsubnet", "subnet": subnet}))
-
-  def addRoute(self, subnet, pubkey):
-    return self.yggCaller(json.dumps({"request":"addremotesubnet", "subnet": subnet, "box_pub_key": pubkey}))
-
-  def addPeer(self, uri):
-    return self.yggCaller(json.dumps({"request":"addpeer", "uri": uri}))
-
-  def getPeers(self):
-    return self.yggCaller(json.dumps({"request":"getpeers"}))['response']['peers']
-
-  def enableTunnel(self):
-    return self.yggCaller(json.dumps({"request":"settunnelrouting", "enabled": True}))['response']['enabled']
-
-  def disableTunnel(self):
-    return self.yggCaller(json.dumps({"request":"settunnelrouting", "enabled": False}))['response']['enabled']
-
-
-  def yggCaller(self, pqrs):
-    try:
-      if (type(self.admin_endpoint) == str):
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-      elif (type(self.admin_endpoint) == tuple):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      else:
-        print ('unknown yggdrasil endpoint type', type(self.admin_endpoint))
-      s.connect(self.admin_endpoint)
-      s.send(pqrs.encode('utf-8'))
-      f = s.makefile('r')
-
-    except PermissionError as e:
-      print('error:: Permission Error AF_UNIX: ' + self.admin_endpoint)
-      print('        Try: chown root:$(whoami) ' + self.admin_endpoint)
-      exit()
-
-
-    while True:
-      data = f.read();
-      if (data == ""):
-        break
-      else:
-        try:
-          gatos += data
-        except NameError as e:
-          gatos = data
-
-    s.close()
-
-    try:
-      return json.loads(gatos)
-    except:
-      return {"status": "error"}
-  #<!-- end caller-->
 
 class NDExec(object):
 
@@ -267,8 +194,8 @@ def application(env, start_response):
     elif (page == "/wip_read_pool_file"):
       return wip_read_pool_file(start_response)
 
-    elif (page == "/wip_call_into_yggdrasil_socket"):
-      return wip_call_into_yggdrasil_socket(start_response)
+    elif (page == "/info"):
+      return get_info(start_response)
 
     elif (page == "/wip_make_register"):
       return wip_get_register(start_response, remote_addr)
@@ -480,58 +407,28 @@ def wip_read_pool_file():
 
 
 
-def wip_call_into_yggdrasil_socket(start_response):
+def get_info(start_response):
 
-  start_response("200 OK", [("content-type", "application/json; charset=utf-8")])
+  try:
+    ygg_thisbox = util.Hemicarp(name="netdaemon", admin_endpoint="/var/run/yggdrasil.sock")
+    data = {
+      'ipv6': ygg_thisbox.ipv6,
+      'build_version': ygg_thisbox.build_version,
+      'coords': ygg_thisbox.coords,
+      'box_pub_key': ygg_thisbox.box_pub_key,
+      'subnet': ygg_thisbox.subnet,
+      'getpeers': list(ygg_thisbox.getPeers()),
+      'enableTunnel': ygg_thisbox.enableTunnel(),
+    }
+    start_response("200 OK", [("content-type", "application/json; charset=utf-8")])
+  except:
+    data = { 'error': True }
+    start_response("500 OK", [("content-type", "application/json; charset=utf-8")])
+  finally:
+    return [ json.dumps(data).encode("utf-8") ]
 
+# <!-- end get_info() -->
 
-  ygg_thisbox = Hemicarp(name="netdaemon", admin_endpoint="/var/run/yggdrasil.sock")
-
-  ## 1. add source subnets
-  # yctl addlocalsubnet subnet=0.0.0.0/0
-  # print('allowSource', ygg_thisbox.allowSource('0.0.0.0'))
-
-  ## 2. enable tunnel routing
-  # yctl settunnelrouting enabled=true
-  # print('enableTunnel', ygg_thisbox.enableTunnel())
-
-  ## 3. Add IP/Network to yggdrasil interface
-  # ip addr add ${above_network_100.100.0.1/24} dev ygg0
-
-  ## 4. Tell yggdrasil connectng peers IP/Network and PubKey
-  # yctl addremotesubnet subnet=${above_network_fetch_100.100.0.10/32} box_pub_key=${above_pubkey_xxxxxx}
-  # print('addRoute', ygg_thisbox.addRoute('100.64.0.10/32', 'ygg_thatbox.box_pub_key'))
-
-  ## 5. Firewall Rules
-  # ipt -t filter -A FORWARD     -i ${wan} -j ACCEPT # and not FROM bogons!
-  # ipt -t filter -A FORWARD     -o ${wan} -j ACCEPT # and not TO bogons
-  # ipt -t nat    -A POSTROUTING -o ${wan} -j MASQUERADE
-  # echo 1 | tee /proc/sys/net/ipv4/ip_forward
-
-
-    # 'ipv6','build_version','coords','box_pub_key',
-    # 'subnet',
-  data = {
-    'ipv6': ygg_thisbox.ipv6,
-    'build_version': ygg_thisbox.build_version,
-    'coords': ygg_thisbox.coords,
-    'box_pub_key': ygg_thisbox.box_pub_key,
-    'subnet': ygg_thisbox.subnet,
-    'getpeers': list(ygg_thisbox.getPeers()),
-    'nodeinfo': ygg_thisbox.nodeinfo,
-    'allowSource': ygg_thisbox.allowSource('0.0.0.0'),
-    'enableTunnel': ygg_thisbox.enableTunnel(),
-    'addRoute': ygg_thisbox.addRoute('100.64.0.10/32', 'ygg_thatbox.box_pub_key')
-  }
-
-  ## More WIP
-  # print('addRoute', ygg_thisbox.addRoute('100.64.0.10/32', ygg_thatbox.box_pub_key))
-  # print('addPeer', ygg_thisbox.addPeer('tcp://ygg.stephen304.com:56088'))
-  # print('addPeer', ygg_thisbox.addPeer('tls://74.104.164.126:1443'))
-
-  return [ json.dumps(data).encode("utf-8") ]
-
-# <!-- end wip_call_into_yggdrasil_socket() -->
 
 """
   GET /info - Displays info
@@ -555,5 +452,27 @@ def wip_call_into_yggdrasil_socket(start_response):
       201 - Registration pending
       403 - On blacklist or not on whitelist, contact node owner
       503 - MaxClients reached try again later
+
+  ## 1. add source subnets
+    # yctl addlocalsubnet subnet=0.0.0.0/0
+    # print('allowSource', ygg_thisbox.allowSource('0.0.0.0'))
+
+    ## 2. enable tunnel routing
+    # yctl settunnelrouting enabled=true
+    # print('enableTunnel', ygg_thisbox.enableTunnel())
+
+    ## 3. Add IP/Network to yggdrasil interface
+    # ip addr add ${above_network_100.100.0.1/24} dev ygg0
+
+    ## 4. Tell yggdrasil connectng peers IP/Network and PubKey
+    # yctl addremotesubnet subnet=${above_network_fetch_100.100.0.10/32} box_pub_key=${above_pubkey_xxxxxx}
+    # print('addRoute', ygg_thisbox.addRoute('100.64.0.10/32', 'ygg_thatbox.box_pub_key'))
+
+    ## 5. Firewall Rules
+    # ipt -t filter -A FORWARD     -i ${wan} -j ACCEPT # and not FROM bogons!
+    # ipt -t filter -A FORWARD     -o ${wan} -j ACCEPT # and not TO bogons
+    # ipt -t nat    -A POSTROUTING -o ${wan} -j MASQUERADE
+    # echo 1 | tee /proc/sys/net/ipv4/ip_forward
+
 
 """
