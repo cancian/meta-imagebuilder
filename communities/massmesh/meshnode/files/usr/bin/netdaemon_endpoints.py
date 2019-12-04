@@ -318,16 +318,20 @@ def wip_make_register(start_response, remote_addr, box_pub_key):
 
   start_response("200 OK", [("content-type", "application/json; charset=utf-8")])
 
+  util.addremotesubnet(citizen, box_pub_key)
+
+  ip_addr_add = str(gateway) + "/" + str(prefix_length)
+  util.addip(ip_addr_add, 'ygg0')
 
   return [ json.dumps({
-    'gateway_addr': remote_addr,
-    'box_pub_key': box_pub_key,
-    'prefix': str(free_network),
-    'pfxlen': str(prefix_length),
-    'gateway': str(gateway),
-    'broadcast': str(network_cidr),
-    'poolsize': str(poolsize),
-    'citizen': str(citizen)
+    'remote_addr': remote_addr,     # 201:1dc6:90e4:1c1a:bba4:b5ba:82:1948
+    'box_pub_key': box_pub_key,     # 6ac222cd81ef3446832b9aef2b0d2c8920ded440f68495a43544ecee99ad4045
+    'prefix': str(free_network),    # 100.100.4.0/24
+    'pfxlen': str(prefix_length),   # 24
+    'gateway': str(gateway),        # 100.100.4.1
+    'broadcast': str(network_cidr), # 100.100.4.0/24
+    'poolsize': str(poolsize),      # 253
+    'citizen': str(citizen)         # 100.100.4.2
   }).encode("utf-8") ]
 
 # <!-- end wip_make_pool_db() -->
