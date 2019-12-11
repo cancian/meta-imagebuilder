@@ -38,5 +38,5 @@ uci set yggdrasil.@ipv4_local_subnet[-1].subnet='0.0.0.0/0'
 uci commit
 
 # Set ula
-# uci set network.globals.ula_prefix='300:xxxx:xxxx:xxxx::/64'
-# uci commit
+uci set network.globals.ula_prefix=$(ygguci get | yggdrasil -useconf -normaliseconf -json | yggdrasil -useconf -subnet)
+uci commit
