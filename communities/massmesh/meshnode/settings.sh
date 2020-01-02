@@ -4,7 +4,8 @@ export EXTRA_IMAGE_NAME="massmesh-meshnode"
 
 # Packages for all mesh nodes
 
-export PACKAGES="${PACKAGES} yggdrasil" # Yggdrasil mesh routing protocol
+export PACKAGES="${PACKAGES} yggdrasil cjdns" # mesh routing protocols yggdrasil and cjdns
+export PACKAGES="${PACKAGES} luci-app-yggdrasil luci-app-cjdns" # LuCI admin for yggdrasil and cjdns
 export PACKAGES="${PACKAGES} jq" # jq for scripting json config changes
 export PACKAGES="${PACKAGES} tor tor-fw-helper tor-resolve torsocks" # Tor
 # export PACKAGES="${PACKAGES} nodogsplash" # Captive portal - currently breaks peering and gateway
