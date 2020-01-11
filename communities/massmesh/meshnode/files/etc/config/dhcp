@@ -12,6 +12,7 @@ config dnsmasq
 	option nonwildcard '1'
 	option localservice '1'
 	list server '200:c493:950a:d576:a413:faef:990b:fb76'
+	list server '1.1.1.1'
 
 config dhcp 'lan'
 	option interface 'lan'
@@ -35,3 +36,11 @@ config odhcpd 'odhcpd'
 	option leasefile '/tmp/hosts/odhcpd'
 	option leasetrigger '/usr/sbin/odhcpd-update'
 	option loglevel '4'
+
+config domain
+	option name 'thisnode.info'
+	option ip '192.168.42.1'
+
+config domain
+	option name 'www.thisnode.info'
+	option ip '192.168.42.1'
