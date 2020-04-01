@@ -59,15 +59,13 @@ jobs:
       - deploy:
           name: "Publish Artifacts"
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              git init
-              git config user.email "circle@circleci.com"
-              git config user.name "CircleCI"
-              git remote add origin git@github.com:MassMesh/meta-imagebuilder-artifacts.git
-              git add .
-              git commit -m "Commit artifacts."
-              GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin master --force
-            fi
+            git init
+            git config user.email "circle@circleci.com"
+            git config user.name "CircleCI"
+            git remote add origin git@github.com:MassMesh/meta-imagebuilder-artifacts.git
+            git add .
+            git commit -m "Commit artifacts."
+            GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push origin "${CIRCLE_BRANCH}" --force
 
 workflows:
   version: 2
