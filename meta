@@ -71,6 +71,19 @@ download() {
 	[ -h $(echo $TARGET | cut -d/ -f2) ] \
 		&& rm $(echo $TARGET | cut -d/ -f2) \
 		|| : # always re-symlink
+	if [ -n "${REFRESH}" ]; then
+		if [ -e ${IB_DIR}/*.xz ]; then
+			if [ $(stat -c %s ${IB_DIR}/*.xz) -gt 25000000 ];
+			  then rm -rf "${IB_DIR}" && mkdir -p "$IB_DIR"
+			else
+				exit 99
+			fi
+		else
+			:
+		fi
+	else
+		:
+	fi
 	ln -s "$IB_DIR" .
 	cd "$IB_DIR" || exit
 
